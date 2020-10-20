@@ -1,0 +1,55 @@
+local function getWeekNum()
+    return tonumber(os.date("%w", os.time()))
+end
+
+local function disountNotification(arg1,arg2)
+    IGS.NotifyAll(arg1)
+    if arg2 then
+        IGS.NotifyAll(arg2)
+    end
+	timer.Create("Discount", 1300, 0, function()
+        IGS.NotifyAll(arg1)
+        if arg2 then
+            IGS.NotifyAll(arg2)
+        end
+	end)
+end
+
+local function dayManipulation(plus_arg)
+    return tostring(tonumber(os.date("%d", os.time())) + plus_arg)
+end
+
+local weekTable = {}
+weekTable[6] = 2
+weekTable[0] = 1
+weekTable["holidays"] = {enable = false, discount = 50, holiday = "Осенние каникулы", before = "ближайшие скидки намечены к 26.10.20"}
+
+if weekTable["holidays"].enable == false then
+    if getWeekNum() == 0 or getWeekNum() == 6 then
+        for k,v in ipairs(IGS.GetItems()) do
+            local old_price = v:Price()
+            local new_price = old_price * 0.8
+    
+            v:SetPrice(new_price)
+            v:SetDiscountedFrom(old_price)
+        end
+
+        if SERVER then
+            if weekTable[getWeekNum()] then
+                disountNotification("В автодонате(F6) действуют скидки (20%) на все товары.", "Скидки продлятся до: "..dayManipulation(weekTable[getWeekNum()])..os.date(".%m", os.time()))
+            end
+        end
+    end
+else
+    for k,v in ipairs(IGS.GetItems()) do
+        local old_price = v:Price()
+        local new_price = old_price * (weekTable["holidays"].discount * 0.01)
+
+        v:SetPrice(new_price)
+        v:SetDiscountedFrom(old_price)
+    end
+
+    if SERVER then
+        disountNotification("В автодонате(F6) действуют скидки "..tostring(weekTable["holidays"].discount).."% на все товары.", "Скидки продлятся до "..weekTable["holidays"].before)
+    end
+end
