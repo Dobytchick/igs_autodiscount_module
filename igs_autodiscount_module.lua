@@ -1,3 +1,13 @@
+local holiday_enabled = false
+local holiday_name = ""
+local holiday_before = ""
+local holiday_discount = 50
+
+local weekTable = {}
+weekTable[6] = 2
+weekTable[0] = 1
+weekTable["holidays"] = {enable = holiday_enabled, discount = holiday_discount, holiday = holiday_name, before = holiday_before}
+
 local function getWeekNum()
     return tonumber(os.date("%w", os.time()))
 end
@@ -18,11 +28,6 @@ end
 local function dayManipulation(plus_arg)
     return tostring(tonumber(os.date("%d", os.time())) + plus_arg)
 end
-
-local weekTable = {}
-weekTable[6] = 2
-weekTable[0] = 1
-weekTable["holidays"] = {enable = false, discount = 50, holiday = "Осенние каникулы", before = "ближайшие скидки намечены к 26.10.20"}
 
 if weekTable["holidays"].enable == false then
     if getWeekNum() == 0 or getWeekNum() == 6 then
