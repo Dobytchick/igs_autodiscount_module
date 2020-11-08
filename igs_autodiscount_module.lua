@@ -48,7 +48,7 @@ if weekTable["holidays"].enable == false then
 else
     for k,v in ipairs(IGS.GetItems()) do
         local old_price = v:Price()
-        local new_price = old_price * (weekTable["holidays"].discount * 0.01)
+        local new_price = old_price * ((100 - weekTable["holidays"].discount) * 0.01)
 
         v:SetPrice(new_price)
         v:SetDiscountedFrom(old_price)
