@@ -55,6 +55,6 @@ else
     end
 
     if SERVER then
-        disountNotification("В автодонате(F6) действуют скидки "..tostring(weekTable["holidays"].discount).."% на все товары.", "Скидки продлятся до "..weekTable["holidays"].before)
+        disountNotification("В автодонате действуют скидки "..tostring(weekTable["holidays"].discount).."% на все товары.", "Скидки продлятся до "..weekTable["holidays"].before)
     end
 end
