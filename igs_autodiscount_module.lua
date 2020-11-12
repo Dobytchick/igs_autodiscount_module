@@ -41,7 +41,7 @@ if weekTable["holidays"].enable == false then
 
         if SERVER then
             if weekTable[getWeekNum()] then
-                disountNotification("В автодонате(F6) действуют скидки (20%) на все товары.", "Скидки продлятся до: "..dayManipulation(weekTable[getWeekNum()])..os.date(".%m", os.time()))
+                disountNotification("В автодонате действуют скидки (20%) на все товары.", "Скидки продлятся до: "..dayManipulation(weekTable[getWeekNum()])..os.date(".%m", os.time()))
             end
         end
     end
