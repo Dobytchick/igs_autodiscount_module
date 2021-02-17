@@ -1,6 +1,6 @@
-local holiday_enabled = false -- действует ли чейчас праздник
+local holiday_enabled = false -- действует ли cейчас праздник
 
-local weekend_discount = true -- скидки по выходным
+local weekend_discount = true -- скидки по выходным; пока что это костыль, как будет вреемя запилю автоматизацию, дабы никому не морочиться со всем
 
 local holiday_name = ""
 local holiday_before = ""
