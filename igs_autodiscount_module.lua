@@ -1,4 +1,7 @@
-local holiday_enabled = false
+local holiday_enabled = false -- действует ли чейчас праздник
+
+local weekend_discount = true -- скидки по выходным
+
 local holiday_name = ""
 local holiday_before = ""
 local holiday_discount = 50
@@ -30,20 +33,21 @@ local function dayManipulation(plus_arg)
 end
 
 if weekTable["holidays"].enable == false then
-    if getWeekNum() == 0 or getWeekNum() == 6 then
-        for k,v in ipairs(IGS.GetItems()) do
-            local old_price = v:Price()
-            local new_price = old_price * 0.8
-    
-            v:SetPrice(new_price)
-            v:SetDiscountedFrom(old_price)
-        end
+    if weekend_discount == true and (getWeekNum() == 0 or getWeekNum() == 6) then
+		for k,v in ipairs(IGS.GetItems()) do
+		    local old_price = v:Price()
+		    local new_price = old_price * 0.8
 
-        if SERVER then
-            if weekTable[getWeekNum()] then
-                disountNotification("В автодонате действуют скидки (20%) на все товары.", "Скидки продлятся до: "..dayManipulation(weekTable[getWeekNum()])..os.date(".%m", os.time()))
-            end
-        end
+		    v:SetPrice(new_price)
+		    v:SetDiscountedFrom(old_price)
+		end
+
+		if SERVER then
+		    if weekTable[getWeekNum()] then
+			disountNotification("В автодонате действуют скидки (20%) на все товары.", "Скидки продлятся до: "..dayManipulation(weekTable[getWeekNum()])..os.date(".%m", os.time()))
+		    end
+		end
+	end -- спасибо табуляциям гитхаба за огромный отступ
     end
 else
     for k,v in ipairs(IGS.GetItems()) do
