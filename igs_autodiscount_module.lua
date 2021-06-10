@@ -44,7 +44,7 @@ end
     2 аргумент - дата начала праздника:
         ! Указывается в формате: Год / месяц / день
 ]]
---AddCustomHoliday("Господин залупа", "2021-06-11")
+--AddCustomHoliday("test", "2021-06-11")
 
 local weekTable = {}
 weekTable["Saturday"] = 2
