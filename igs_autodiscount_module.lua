@@ -1,64 +1,83 @@
-local holiday_enabled = false -- действует ли cейчас праздник
-
-local weekend_discount = true -- скидки по выходным; пока что это костыль, как будет вреемя запилю автоматизацию, дабы никому не морочиться со всем
-
-local holiday_name = ""
-local holiday_before = ""
-local holiday_discount = 50
-
-local weekTable = {}
-weekTable[6] = 2
-weekTable[0] = 1
-weekTable["holidays"] = {enable = holiday_enabled, discount = holiday_discount, holiday = holiday_name, before = holiday_before}
-
-local function getWeekNum()
-    return tonumber(os.date("%w", os.time()))
-end
-
-local function disountNotification(arg1,arg2)
-    IGS.NotifyAll(arg1)
-    if arg2 then
-        IGS.NotifyAll(arg2)
+local function disountNotification(...)
+    local unpack_arguments = {...}
+    IGS.NotifyAll(unpack_arguments[1])
+    if unpack_arguments[2] then
+        IGS.NotifyAll(unpack_arguments[2])
     end
-	timer.Create("Discount", 1300, 0, function()
-        IGS.NotifyAll(arg1)
-        if arg2 then
-            IGS.NotifyAll(arg2)
+	timer.Create("Discount", 30, 0, function()
+        IGS.NotifyAll(unpack_arguments[1])
+        if unpack_arguments[2] then
+            IGS.NotifyAll(unpack_arguments[2])
         end
 	end)
 end
 
-local function dayManipulation(plus_arg)
-    return tostring(tonumber(os.date("%d", os.time())) + plus_arg)
+http.Fetch("https://date.nager.at/api/v2/PublicHolidays/" .. os.date("%Y", os.time()) .. "/RU", function(code) 
+    HolidaysTable = util.JSONToTable(code)
+end)
+
+HolidaysTable = HolidaysTable or {}
+
+local function AddCustomHoliday(Sname, Sdate)
+    if HolidaysTable[#HolidaysTable - 1].localName == "Sname" then return false end
+    HolidaysTable[#HolidaysTable + 1] = {localName = Sname, date = Sdate}
 end
 
-if weekTable["holidays"].enable == false then
-    if weekend_discount == true and (getWeekNum() == 0 or getWeekNum() == 6) then
-		for k,v in ipairs(IGS.GetItems()) do
-		    local old_price = v:Price()
-		    local new_price = old_price * 0.8
 
-		    v:SetPrice(new_price)
-		    v:SetDiscountedFrom(old_price)
-		end
+local WeekendDiscountEnabled = true     -- Будут ли действовать скидки по выходным
+local WeekendDiscount = 20            -- Сколько будет действовать процентов скидка на товары
 
-		if SERVER then
-		    if weekTable[getWeekNum()] then
-			disountNotification("В автодонате действуют скидки (20%) на все товары.", "Скидки продлятся до: "..dayManipulation(weekTable[getWeekNum()])..os.date(".%m", os.time()))
-		    end
-		end
-	end -- спасибо табуляциям гитхаба за огромный отступ
-    end
-else
+local HolidayDiscount = 50              -- Сколько будет действовать процентов скидка на товары
+local HolidayDuration = 7               -- Сколько будут действовать скидки после начала праздника (в днях)
+
+for k,v in pairs(HolidaysTable) do
+    v.countryCode = nil
+    v.fixed = nil
+    v.global = nil
+    v.type = nil
+    v.name = nil
+    v.launchYear = nil
+end
+
+--[[
+    1 аргумент - имя праздника
+    2 аргумент - дата начала праздника:
+        ! Указывается в формате: Год / месяц / день
+]]
+--AddCustomHoliday("Господин залупа", "2021-06-11")
+
+local weekTable = {}
+weekTable["Saturday"] = 2
+weekTable["Sunday"] = 1
+
+if weekTable[os.date("%A", os.time())] and WeekendDiscountEnabled then
     for k,v in ipairs(IGS.GetItems()) do
         local old_price = v:Price()
-        local new_price = old_price * ((100 - weekTable["holidays"].discount) * 0.01)
+        local new_price = old_price * 0.8
 
         v:SetPrice(new_price)
         v:SetDiscountedFrom(old_price)
     end
 
     if SERVER then
-        disountNotification("В автодонате действуют скидки "..tostring(weekTable["holidays"].discount).."% на все товары.", "Скидки продлятся до "..weekTable["holidays"].before)
+        disountNotification("В автодонате(F6) действуют скидки (20%) на все товары.", "Скидки продлятся до: " .. os.date("%d", os.time() + (weekTable[os.date("%A", os.time())] * 86400)) .. os.date(".%m", os.time()))
+    end
+else
+    for k,v in pairs(HolidaysTable) do
+        if v.date == os.date("%Y-%m-%d", os.time()) then
+            local holiday_timestamp = os.time({year = tonumber(string.sub(v.date, 1, 4)), month = tonumber(string.sub(v.date, 6, 7)), day = tonumber(string.sub(v.date, 9))})
+
+            for k,v in ipairs(IGS.GetItems()) do
+                local old_price = v:Price()
+                local new_price = old_price * (HolidayDiscount * 0.01)
+        
+                v:SetPrice(new_price)
+                v:SetDiscountedFrom(old_price)
+            end
+
+            if SERVER then
+                disountNotification("В автодонате(F6) действуют скидки " .. tostring(HolidayDiscount) .. [[% на все товары. в честь праздника "]] .. v.localName .. [["]], [[ Скидки продлятся до ]] .. os.date("%d.%m.%y", holiday_timestamp + (HolidayDuration * 86400)))
+            end
+        end
     end
 end
