@@ -19,7 +19,7 @@ end)
 HolidaysTable = HolidaysTable or {}
 
 local function AddCustomHoliday(Sname, Sdate)
-    if HolidaysTable[#HolidaysTable - 1].localName == "Sname" then return false end
+    if HolidaysTable[#HolidaysTable - 1].localName == Sname then return false end
     HolidaysTable[#HolidaysTable + 1] = {localName = Sname, date = Sdate}
 end
 
