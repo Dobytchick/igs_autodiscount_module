@@ -77,11 +77,13 @@ else
             local holiday_timestamp = os.time({year = tonumber(string.sub(v.date, 1, 4)), month = tonumber(string.sub(v.date, 6, 7)), day = tonumber(string.sub(v.date, 9))})
 
             for k,v in ipairs(IGS.GetItems()) do
-                local old_price = v:Price()
-                local new_price = old_price * (HolidayDiscount * 0.01)
-        
-                v:SetPrice(new_price)
-                v:SetDiscountedFrom(old_price)
+		if !DiscountBlacklist[v.category] then
+			local old_price = v:Price()
+			local new_price = old_price * (HolidayDiscount * 0.01)
+
+			v:SetPrice(new_price)
+			v:SetDiscountedFrom(old_price)
+		end
             end
 
             if SERVER then
