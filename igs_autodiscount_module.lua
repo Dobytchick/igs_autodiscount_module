@@ -79,7 +79,7 @@ else
             for k,v in ipairs(IGS.GetItems()) do
 		if !DiscountBlacklist[v.category] then
 			local old_price = v:Price()
-			local new_price = old_price * (HolidayDiscount * 0.01)
+			local new_price = old_price * (1 - (HolidayDiscount * 0.01))
 
 			v:SetPrice(new_price)
 			v:SetDiscountedFrom(old_price)
