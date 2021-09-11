@@ -69,7 +69,7 @@ if weekTable[os.date("%A", os.time())] and WeekendDiscountEnabled then
     end
 
     if SERVER then
-        disountNotification("В автодонате(F6) действуют скидки (20%) на все товары.", "Скидки продлятся до: " .. os.date("%d", os.time() + (weekTable[os.date("%A", os.time())] * 86400)) .. os.date(".%m", os.time()))
+        disountNotification("В автодонате(F6) действуют скидки (" .. WeekendDiscount .. "%) на все товары.", "Скидки продлятся до: " .. os.date("%d", os.time() + (weekTable[os.date("%A", os.time())] * 86400)) .. os.date(".%m", os.time()))
     end
 else
     for k,v in pairs(HolidaysTable) do
