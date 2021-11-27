@@ -12,8 +12,26 @@ local function disountNotification(...)
 	end)
 end
 
-http.Fetch("https://date.nager.at/api/v2/PublicHolidays/" .. os.date("%Y", os.time()) .. "/RU", function(code) 
+http.Fetch("https://date.nager.at/api/v2/PublicHolidays/" .. os.date("%Y", os.time()) .. "/RU", function(code)
     HolidaysTable = util.JSONToTable(code)
+
+    -- Убираем нахуй никому ненужные данные в таблице ¯\_(ツ)_/¯
+    --[[ UPD:
+            пришось переместить это все сюда и накинуть хук, чобы работало норм типа.........
+            если не добавлять хук то оно как мысли...........
+            вроде таблица есть а вроде её нет.......
+            мыслить в общем не каждому дано
+    ]]
+    for k,v in pairs(HolidaysTable) do
+        v.countryCode = nil
+        v.fixed = nil
+        v.global = nil
+        v.type = nil
+        v.name = nil
+        v.launchYear = nil
+    end
+
+    hook.Call("Holiday.Create", GAMEMODE)
 end)
 
 local DiscountBlacklist = {}
@@ -36,22 +54,17 @@ local HolidayDuration = 7               -- Сколько будут дейст�
 
 --AddBlackCategory("КатегорияНейм") -- Добавление категории, на которую не будут действовать скидки
 
--- Убираем нахуй никому ненужные данные в таблице ¯\_(ツ)_/¯
-for k,v in pairs(HolidaysTable) do
-    v.countryCode = nil
-    v.fixed = nil
-    v.global = nil
-    v.type = nil
-    v.name = nil
-    v.launchYear = nil
-end
-
+-- Расскомментишь строку ниже, если надо. Все пояснения даны.
 --[[
     1 аргумент - имя праздника
     2 аргумент - дата начала праздника:
         ! Указывается в формате: Год / месяц / день
 ]]
---AddCustomHoliday("test", "2021-06-11")
+
+--hook.Add("Holiday.Create", "ADD_CUSTOM_HOLIDAYS", function()
+--    AddCustomHoliday("Переоткрытие проекта", "2021-01-04")
+--end)
+
 
 local weekTable = {}
 weekTable["Saturday"] = 2
