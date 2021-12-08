@@ -74,7 +74,7 @@ if weekTable[os.date("%A", os.time())] and WeekendDiscountEnabled then
     for k,v in ipairs(IGS.GetItems()) do
 	if !DiscountBlacklist[v.category] then
 		local old_price = v:Price()
-		local new_price = old_price * 0.8
+		local new_price = old_price * (1 - (WeekendDiscount * 0.01))
 
 		v:SetPrice(new_price)
 		v:SetDiscountedFrom(old_price)
