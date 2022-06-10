@@ -4,6 +4,6 @@
 
 ## Установка
 
-1. [Скачать](archive/refs/heads/main.zip) этот модуль
+1. [Скачать](/archive/refs/heads/main.zip) этот модуль
 2. Скопировать igs-modification в /addons вашего сервера
 3. Перезагрузить сервер
