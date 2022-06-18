@@ -17,7 +17,7 @@ end
 
 local THIS_TIMESTAMP = os.date("*t", os.time())
 
-http.Fetch("https://date.nager.at/api/v2/PublicHolidays/" .. os.date("%Y", os.time()) .. "/RU", function(code)
+http.Fetch("https://date.nager.at/api/v3/PublicHolidays/" .. os.date("%Y", os.time()) .. "/RU", function(code)
     HOLIDAYS_TBL = util.JSONToTable(code)
 
     for k,v in pairs(HOLIDAYS_TBL) do
