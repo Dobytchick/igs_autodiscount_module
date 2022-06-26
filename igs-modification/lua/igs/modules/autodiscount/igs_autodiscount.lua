@@ -107,7 +107,7 @@ end
 if WEEK_TBL[os.date("%A", os.time())] and WEEK_DISCOUNT_ENABLE then
     for k,v in ipairs(IGS.GetItems()) do
         if !DISCOUNT_BLACKLISTED_CATS[v.category] then
-            local old_price = v:Price()
+            local old_price = v.price
             local new_price = old_price * (1 - (WEEK_DISCOUNT * 0.01))
 
             v:SetPrice(new_price)
@@ -122,7 +122,7 @@ else
     if HOLIDAY and HOLIDAY_DATE_STAMP then
         for k,v in ipairs(IGS.GetItems()) do
             if !DISCOUNT_BLACKLISTED_CATS[v.category] then
-                local old_price = v:Price()
+                local old_price = v.price
                 local new_price = old_price * (1 - (HOLIDAY_DISCOUNT * 0.01))
 
                 v:SetPrice(new_price)
