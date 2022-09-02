@@ -1,12 +1,12 @@
 local function disountNotification(...)
     local unpack_arguments = {...}
-	
+
     IGS.NotifyAll(unpack_arguments[1])
-	
+
     if unpack_arguments[2] then
         IGS.NotifyAll(unpack_arguments[2])
     end
-	
+
 	timer.Create("Discount", 300, 0, function()
         IGS.NotifyAll(unpack_arguments[1])
         if unpack_arguments[2] then
@@ -18,9 +18,9 @@ end
 local THIS_TIMESTAMP = os.date("*t", os.time())
 
 http.Fetch("https://date.nager.at/api/v3/PublicHolidays/" .. os.date("%Y", os.time()) .. "/RU", function(code)
-    HOLIDAYS_TBL = util.JSONToTable(code)
+    HolidaysTable = util.JSONToTable(code)
 
-    for k,v in pairs(HOLIDAYS_TBL) do
+    for k,v in pairs(HolidaysTable) do
         v.countryCode = nil
         v.fixed = nil
         v.global = nil
@@ -28,7 +28,7 @@ http.Fetch("https://date.nager.at/api/v3/PublicHolidays/" .. os.date("%Y", os.ti
         v.name = nil
         v.launchYear = nil
         if v.localName == "Новогодние Каникулы" and v.date ~= os.date("%Y-01-01", os.time()) then
-            HOLIDAYS_TBL[k] = nil -- Удаляем то, чего так много и не должно быть
+            HolidaysTable[k] = nil -- Удаляем то, чего так много и не должно быть
         end
     end
 
@@ -36,19 +36,19 @@ http.Fetch("https://date.nager.at/api/v3/PublicHolidays/" .. os.date("%Y", os.ti
 end)
 
 local DISCOUNT_BLACKLISTED_CATS = {}
-HOLIDAYS_TBL = HOLIDAYS_TBL or {}
+HolidaysTable = HolidaysTable or {}
 
 local function AddBlackCategory(sCat)
 	DISCOUNT_BLACKLISTED_CATS[sCat] = true
 end
 
 local function AddCustomHoliday(sName, sDate)
-    if HOLIDAYS_TBL[#HOLIDAYS_TBL - 1].localName == sName then return false end
-    HOLIDAYS_TBL[#HOLIDAYS_TBL + 1] = {localName = sName, date = sDate}
+    if HolidaysTable[#HolidaysTable - 1].localName == sName then return false end
+    HolidaysTable[#HolidaysTable + 1] = {localName = sName, date = sDate}
 end
 
 local BEFORE_START = 12                 -- За сколько дней до начала праздника будут начинаться скидки, если время проведения б
- 
+
 local WEEK_DISCOUNT_ENABLE = true       -- Будут ли действовать скидки по выходным
 local WEEK_DISCOUNT = 20                -- Сколько будет действовать процентов скидка на товары
 local IGNORE_WEEKEND = true             -- Будут ли игнорироваться скидки по выходным, во время проведения праздничных
@@ -65,11 +65,11 @@ local HOLIDAY_DURATION = 7              -- Сколько будут дейст�
         ! Указывается в формате: Год / месяц / день
 ]]
 
-hook.Add("Holiday.Create", "CUSTOM.HOLIDAYS", function() 
+hook.Add("Holiday.Create", "custom-holidays", function()
     AddCustomHoliday("Новый год", os.date("%Y-12-31"))
 end)
 
-local HOLIDAY, HOLIDAY_DATE_STAMP
+local holiday, holiday_ds
 
 local WEEK_TBL = {}
 WEEK_TBL["Saturday"] = 2
@@ -77,27 +77,30 @@ WEEK_TBL["Sunday"] = 1
 
 local THIS_DAY =  os.date("*t", os.time())["day"]
 
-for k,v in pairs(HOLIDAYS_TBL) do
-    local TMP_DATE = string.Split(v.date, "-")
-    TMP_DATE[3] = tonumber(TMP_DATE[3])
+for k,v in pairs(HolidaysTable) do
+    local tmp_date = string.Split(v.date, "-")
+    tmp_date[3] = tonumber(tmp_date[3])
 
-    local START_DAY = TMP_DATE[3] - BEFORE_START > 0 and TMP_DATE[3] - BEFORE_START or 1
-    local END_DAY = TMP_DATE[3] + HOLIDAY_DURATION
-    
-    if TMP_DATE[1] .. TMP_DATE[2] == os.date("%Y%m", os.time()) and START_DAY <= THIS_DAY and END_DAY >= THIS_DAY then
-        HOLIDAY, HOLIDAY_DATE_STAMP = v.localName, os.time({
-            year = tonumber(TMP_DATE[1]),
-            month = tonumber(TMP_DATE[2]), 
-            day = TMP_DATE[3]
+    local year, month, day = tmp_date[1], tmp_date[2], tmp_date[3]
+
+    local start_day = day - BEFORE_START > 0 and day - BEFORE_START or 1
+    local end_day = day + HOLIDAY_DURATION
+
+    if year .. month == os.date("%Y%m", os.time()) and START_DAY <= THIS_DAY and END_DAY >= THIS_DAY then
+        holiday, holiday_ds = v.localName, os.time({
+            year = tonumber(year),
+            month = tonumber(month),
+            day = day
         })
-		
+
         break
     end
 end
 
+-- выключаем скидки по выходным, в случае проведения скидок по праздникам
 if IGNORE_WEEKEND then
-    if HOLIDAY and HOLIDAY_DATE_STAMP then
-        WEEK_DISCOUNT_ENABLE = nil -- выключаем скидки по выходным, в случае проведения скидок по праздникам
+    if holiday and holiday_ds then
+        WEEK_DISCOUNT_ENABLE = nil
     else
         TMP_DATE = nil
         HOLIDAY_TIMESTAMP = nil
@@ -119,7 +122,7 @@ if WEEK_TBL[os.date("%A", os.time())] and WEEK_DISCOUNT_ENABLE then
         disountNotification("В автодонате(F6) действуют скидки (" .. WEEK_DISCOUNT .. "%) на все товары.", "Скидки продлятся до: " .. os.date("%d", os.time() + (WEEK_TBL[os.date("%A", os.time())] * 86400)) .. os.date(".%m", os.time()))
     end
 else
-    if HOLIDAY and HOLIDAY_DATE_STAMP then
+    if holiday and holiday_ds then
         for k,v in ipairs(IGS.GetItems()) do
             if !DISCOUNT_BLACKLISTED_CATS[v.category] then
                 local old_price = v.price
