@@ -50,8 +50,6 @@ coroutine.wrap(function()
     end
 end)()
 
-FetchAPI()
-
 local DISCOUNT_BLACKLISTED_CATS = {}
 local HolidaysTable = HolidaysTable or {}
 
