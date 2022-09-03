@@ -53,7 +53,7 @@ end)()
 FetchAPI()
 
 local DISCOUNT_BLACKLISTED_CATS = {}
-HolidaysTable = HolidaysTable or {}
+local HolidaysTable = HolidaysTable or {}
 
 local function AddBlackCategory(sCat)
 	DISCOUNT_BLACKLISTED_CATS[sCat] = true
