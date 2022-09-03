@@ -154,7 +154,7 @@ else
         end
 
         if SERVER then
-            disountNotification('В автодонате(F6) действуют скидки ' .. tostring(HOLIDAY_DISCOUNT) .. [[% на все товары. в честь праздника ']] .. HOLIDAY .. [[']], [[ Скидки продлятся до ]] .. os.date('%d.%m.%y', HOLIDAY_DATE_STAMP + (HOLIDAY_DURATION * 86400)))
+            disountNotification('В автодонате(F6) действуют скидки ' .. tostring(HOLIDAY_DISCOUNT) .. '% на все товары. в честь праздника "' .. HOLIDAY .. "'", ' Скидки продлятся до ' .. os.date('%d.%m.%y', HOLIDAY_DATE_STAMP + (HOLIDAY_DURATION * 86400)))
         end
     end
 end
