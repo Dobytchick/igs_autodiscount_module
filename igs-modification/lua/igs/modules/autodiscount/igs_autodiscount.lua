@@ -1,68 +1,68 @@
-local function disountNotification(...)
-    local unpack_arguments = {...}
+local function discountNotification(msg, extra)
+    IGS.NotifyAll(msg)
 
-    IGS.NotifyAll(unpack_arguments[1])
-
-    if unpack_arguments[2] then
-        IGS.NotifyAll(unpack_arguments[2])
+    if extra then
+        IGS.NotifyAll(extra)
     end
 
-	timer.Create('Discount', 300, 0, function()
-        IGS.NotifyAll(unpack_arguments[1])
-        if unpack_arguments[2] then
-            IGS.NotifyAll(unpack_arguments[2])
+    timer.Create("IGS.Discount", 300, 0, function()
+        IGS.NotifyAll(msg)
+        if extra then
+            IGS.NotifyAll(extra)
         end
-	end)
+    end)
 end
 
 local THIS_TIMESTAMP = os.date('*t', os.time())
 
-
-local function CoFetch(url)
+local function CoFetch()
     local running = coroutine.running()
-    local thisdate = os.date("%Y", os.time())
+    local thisYear = os.date("%Y")
 
-    http.Fetch("https://date.nager.at/api/v3/PublicHolidays/" .. thisdate .. "/RU", function(response)
-        local IsJson = response:match('%[{"')
-
-        coroutine.resume(running, response, IsJson ~= nil)
+    http.Fetch(Format("https://date.nager.at/api/v3/PublicHolidays/%s/RU", thisYear), function(response)
+        coroutine.resume(running, response, response:match('%[{"') ~= nil)
     end)
 
     return coroutine.yield()
 end
 
+local HolidaysTable = {}
+
 coroutine.wrap(function()
     local response, isjson = CoFetch()
-    if !isjson then ErrorNoHalt('IGS_AUTODISCOUNT_MODULE: ', response, ' не json') return end
+    if not isjson then
+        ErrorNoHalt("IGS_AUTODISCOUNT_MODULE: ", response, " не является json\n")
+        return
+    end
 
-    HolidaysTable = util.JSONToTable(response)
+    local holidays = util.JSONToTable(response)
+    if not holidays then return end
 
-    for k,v in pairs(HolidaysTable) do
-        v.countryCode = nil
-        v.fixed = nil
-        v.global = nil
-        v.type = nil
-        v.name = nil
-        v.launchYear = nil
-        if v.localName == 'Новогодние Каникулы' and v.date ~= os.date('%Y-01-01', os.time()) then
-            HolidaysTable[k] = nil -- Удаляем то, чего так много и не должно быть
+    for k, v in pairs(holidays) do
+        for _, field in ipairs({"countryCode", "fixed", "global", "type", "name", "launchYear"}) do
+            v[field] = nil
+        end
+
+        if v.localName == "Новогодние Каникулы" and v.date ~= os.date("%Y-01-01") then -- Удаляем то, чего так много и не должно быть
+            holidays[k] = nil
         end
     end
+
+    HolidaysTable = holidays
 end)()
 
 local DISCOUNT_BLACKLISTED_CATS = {}
-local HolidaysTable = HolidaysTable or {}
 
 local function AddBlackCategory(sCat)
 	DISCOUNT_BLACKLISTED_CATS[sCat] = true
 end
 
 local function AddCustomHoliday(sName, sDate)
-    if HolidaysTable[#HolidaysTable - 1].localName == sName then return false end
+    if HolidaysTable[#HolidaysTable - 1] and HolidaysTable[#HolidaysTable - 1].localName == sName then return false end
     HolidaysTable[#HolidaysTable + 1] = {localName = sName, date = sDate}
 end
 
-local BEFORE_START = 12                 -- За сколько дней до начала праздника будут начинаться скидки, если время проведения б
+local BEFORE_START = 12                 -- За сколько дней до начала праздника будут начинаться скидки
 
 local WEEK_DISCOUNT_ENABLE = true       -- Будут ли действовать скидки по выходным
 local WEEK_DISCOUNT = 20                -- Сколько будет действовать процентов скидка на товары
@@ -82,77 +82,69 @@ local HOLIDAY_DURATION = 7              -- Сколько будут дейст�
 
 --AddCustomHoliday('Новый год', os.date('%Y-12-31'))
 
+local WEEK_TBL = {
+    Saturday = 2,
+    Sunday   = 1
+}
+
+local now = os.time()
+local thisDay = tonumber(os.date("%d", now))
+local thisYM  = tonumber(os.date("%Y%m", now))
+
 local holiday, holiday_ds
+for _, v in pairs(HolidaysTable) do
+    local year, month, day = v.date:match("(%d+)%-(%d+)%-(%d+)")
+    year, month, day = tonumber(year), tonumber(month), tonumber(day)
 
-local WEEK_TBL = {}
-WEEK_TBL['Saturday'] = 2
-WEEK_TBL['Sunday'] = 1
+    local startDay = math.max(day - BEFORE_START, 1)
+    local endDay   = day + HOLIDAY_DURATION
 
-local THIS_DAY =  os.date('*t', os.time())['day']
-
-for k,v in pairs(HolidaysTable) do
-    local tmp_date = string.Split(v.date, '-')
-    tmp_date[3] = tonumber(tmp_date[3])
-
-    local year, month, day = tmp_date[1], tmp_date[2], tmp_date[3]
-
-    local start_day = day - BEFORE_START > 0 and day - BEFORE_START or 1
-    local end_day = day + HOLIDAY_DURATION
-
-    if year .. month == os.date('%Y%m', os.time()) and START_DAY <= THIS_DAY and END_DAY >= THIS_DAY then
-        holiday, holiday_ds = v.localName, os.time({
-            year = tonumber(year),
-            month = tonumber(month),
-            day = day
-        })
-
+    if (year * 100 + month) == thisYM and startDay <= thisDay and endDay >= thisDay then
+        holiday    = v.localName
+        holiday_ds = os.time({year = year, month = month, day = day})
         break
     end
 end
 
 -- выключаем скидки по выходным, в случае проведения скидок по праздникам
-if IGNORE_WEEKEND then
-    if holiday and holiday_ds then
-        WEEK_DISCOUNT_ENABLE = nil
-    else
-        TMP_DATE = nil
-        HOLIDAY_TIMESTAMP = nil
-    end
+if IGNORE_WEEKEND and not (holiday and holiday_ds) then
+    TMP_DATE, HOLIDAY_TIMESTAMP = nil, nil
+else
+    WEEK_DISCOUNT_ENABLE = nil
 end
 
-if WEEK_TBL[os.date('%A', os.time())] and WEEK_DISCOUNT_ENABLE then
-    for k,v in ipairs(IGS.GetItems()) do
-        if !DISCOUNT_BLACKLISTED_CATS[v.category] then
+local function ApplyDiscount(perc)
+    for _, v in ipairs(IGS.GetItems()) do
+        if not DISCOUNT_BLACKLISTED_CATS[v.category] then
             local old_price = v.price
-            local new_price = old_price * (1 - (WEEK_DISCOUNT * 0.01))
+            local new_price = old_price * (1 - perc * 0.01)
 
             v:SetPrice(new_price)
             v:SetDiscountedFrom(old_price)
         end
     end
+end
+
+local weekDay = WEEK_TBL[os.date("%A", now)]
+if weekDay and WEEK_DISCOUNT_ENABLE then
+    ApplyDiscount(WEEK_DISCOUNT)
 
     if SERVER then
-        local holiday_date = WEEK_TBL[os.date('%A', os.time())]
-        local day_seconds = holiday_date * 86400
-        local end_day = os.date('%d', os.time() + holoday_to_seconds)
-        local end_month = os.date('.%m', os.time())
-
-        disountNotification('В автодонате(F6) действуют скидки (' .. WEEK_DISCOUNT .. '%) на все товары.', 'Скидки продлятся до: ' .. end_day .. end_month)
+        local end_day   = os.date("%d", now + weekDay * 86400)
+        local end_month = os.date(".%m", now)
+        discountNotification(
+            Format("В автодонате (F6) действуют скидки (%d%%) на все товары.", WEEK_DISCOUNT),
+            Format("Скидки продлятся до: %s%s", end_day, end_month)
+        )
     end
-else
-    if holiday and holiday_ds then
-        for k,v in ipairs(IGS.GetItems()) do
-            if !DISCOUNT_BLACKLISTED_CATS[v.category] then
-                local old_price = v.price
-                local new_price = old_price * (1 - (HOLIDAY_DISCOUNT * 0.01))
+elseif holiday and holiday_ds then
+    ApplyDiscount(HOLIDAY_DISCOUNT)
 
-                v:SetPrice(new_price)
-                v:SetDiscountedFrom(old_price)
-            end
-        end
-
-        if SERVER then
-            disountNotification('В автодонате(F6) действуют скидки ' .. tostring(HOLIDAY_DISCOUNT) .. '% на все товары. в честь праздника "' .. HOLIDAY .. "'", ' Скидки продлятся до ' .. os.date('%d.%m.%y', HOLIDAY_DATE_STAMP + (HOLIDAY_DURATION * 86400)))
-        end
+    if SERVER then
+        discountNotification(
+            Format('В автодонате (F6) действуют скидки %d%% на все товары в честь праздника "%s".', HOLIDAY_DISCOUNT, holiday),
+            Format('Скидки продлятся до %s', os.date('%d.%m.%y', holiday_ds + HOLIDAY_DURATION * 86400))
+        )
     end
 end
+
