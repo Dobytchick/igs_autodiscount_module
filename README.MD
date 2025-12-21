@@ -2,6 +2,8 @@
 
 **Подробнее и помощь:** https://forum.gm-donate.net/t/avtoskidki-po-prazdnikam/176/
 
+
+
 ## Установка
 
 1. [Скачать](https://github.com/Dobytchick/igs_autodiscount_module/archive/refs/heads/main.zip) этот модуль
