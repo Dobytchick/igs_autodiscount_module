@@ -1,0 +1,16 @@
+name: Проверка Lua
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Установка Lua 5.1
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+      - name: Проверка скидок
+        run: lua5.1 tests/autodiscount.lua igs-modification/lua/igs/modules/autodiscount/igs_autodiscount.lua
